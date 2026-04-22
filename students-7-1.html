@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Практична 7.1 — Студенти</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --surface: #ffffff;
+    --card: #fafaf8;
+    --border: #e2e0d8;
+    --accent: #2563eb;
+    --accent-lt: #eff6ff;
+    --green: #16a34a;
+    --green-lt: #f0fdf4;
+    --red: #dc2626;
+    --red-lt: #fef2f2;
+    --amber: #d97706;
+    --amber-lt: #fffbeb;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Manrope', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-family: var(--mono); font-size: 16px; font-weight: 600; color: var(--accent); }
+  .header-pills { display: flex; gap: 12px; }
+  .pill { background: var(--accent-lt); color: var(--accent); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; font-family: var(--mono); }
+  .pill.green { background: var(--green-lt); color: var(--green); }
+  .pill.amber { background: var(--amber-lt); color: var(--amber); }
+
+  .tabs { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; gap: 0; }
+  .tab { padding: 14px 20px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+  main { padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* FORM */
+  .form-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 24px; margin-bottom: 20px;
+  }
+  .form-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; }
+  .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
+  .field label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
+  .inp {
+    width: 100%; background: var(--card); border: 1px solid var(--border); color: var(--text);
+    padding: 9px 13px; border-radius: 7px; font-size: 13px; font-family: var(--sans);
+    outline: none; transition: border-color .2s;
+  }
+  .inp:focus { border-color: var(--accent); }
+  .inp.err { border-color: var(--red); }
+
+  /* BUTTONS */
+  .btn { padding: 9px 18px; border-radius: 7px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; font-family: var(--sans); transition: all .18s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: transparent; border: 1px solid var(--border); color: var(--red); padding: 5px 10px; font-size: 12px; }
+  .btn-danger:hover { background: var(--red-lt); border-color: var(--red); }
+
+  /* SEARCH/FILTER BAR */
+  .bar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .search-wrap { position: relative; flex: 1; min-width: 200px; }
+  .search-wrap input { width: 100%; padding-left: 34px; }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; }
+
+  /* TABLE */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--card); }
+  th { padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: var(--accent); }
+  td { padding: 12px 16px; border-top: 1px solid var(--border); font-size: 13px; }
+  tr:hover td { background: #fafaf8; }
+
+  .grade-badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-family: var(--mono); font-size: 12px; font-weight: 600; }
+  .g-a { background: var(--green-lt); color: var(--green); }
+  .g-b { background: var(--accent-lt); color: var(--accent); }
+  .g-c { background: var(--amber-lt); color: var(--amber); }
+  .g-d { background: var(--red-lt); color: var(--red); }
+  .fac-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: var(--card); border: 1px solid var(--border); color: var(--muted); }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .scard { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .scard-val { font-family: var(--mono); font-size: 26px; font-weight: 600; color: var(--accent); margin-bottom: 3px; }
+  .scard-lbl { font-size: 12px; color: var(--muted); }
+  .best-card { background: var(--accent); color: #fff; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; gap: 20px; }
+  .best-icon { font-size: 36px; }
+  .best-name { font-size: 18px; font-weight: 700; }
+  .best-meta { font-size: 13px; opacity: .8; margin-top: 2px; }
+  .best-grade { font-family: var(--mono); font-size: 32px; font-weight: 600; margin-left: auto; }
+
+  /* FACULTY BARS */
+  .fac-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; }
+  .sec-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px; }
+  .fac-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .fac-label { width: 100px; font-size: 13px; color: var(--text); }
+  .fac-bar-bg { flex: 1; background: var(--bg); border-radius: 4px; height: 8px; overflow: hidden; }
+  .fac-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width .5s; }
+  .fac-num { font-family: var(--mono); font-size: 12px; color: var(--muted); width: 24px; text-align: right; }
+  .fac-avg { font-family: var(--mono); font-size: 11px; color: var(--accent); width: 40px; text-align: right; }
+
+  /* SEARCH PANEL */
+  .search-result { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-top: 16px; }
+  .sr-name { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+  .sr-row { display: flex; gap: 24px; flex-wrap: wrap; margin-top: 10px; }
+  .sr-item { font-size: 13px; color: var(--muted); }
+  .sr-item span { color: var(--text); font-weight: 600; }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+  /* TOAST */
+  #toast { position: fixed; bottom: 24px; right: 24px; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 999; }
+  #toast.show { opacity: 1; }
+  #toast.ok { background: var(--green); color: #fff; }
+  #toast.err { background: var(--red); color: #fff; }
+
+  .sort-arr { font-size: 10px; margin-left: 3px; }
+  .err-msg { color: var(--red); font-size: 11px; margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">students.mgr <span style="color:var(--muted);font-weight:400">/ v7.1</span></div>
+  <div class="header-pills">
+    <div class="pill" id="h-total">0 студентів</div>
+    <div class="pill green" id="h-avg">Сер: —</div>
+    <div class="pill amber" id="h-best">Топ: —</div>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="tab('list')">📋 Список</div>
+  <div class="tab" onclick="tab('stats')">📊 Статистика</div>
+  <div class="tab" onclick="tab('search')">🔍 Пошук</div>
+</div>
+
+<main>
+
+<!-- LIST -->
+<div class="panel active" id="panel-list">
+  <div class="form-card">
+    <div class="form-title">Додати студента</div>
+    <div class="form-row">
+      <div class="field">
+        <label>Ім'я</label>
+        <input class="inp" id="f-name" placeholder="Іван Петренко">
+        <div class="err-msg" id="e-name"></div>
+      </div>
+      <div class="field">
+        <label>Вік</label>
+        <input class="inp" id="f-age" type="number" placeholder="20" min="16" max="35">
+        <div class="err-msg" id="e-age"></div>
+      </div>
+      <div class="field">
+        <label>Середній бал (0–100)</label>
+        <input class="inp" id="f-grade" type="number" placeholder="85.5" min="0" max="100" step="0.1">
+        <div class="err-msg" id="e-grade"></div>
+      </div>
+      <div class="field">
+        <label>Факультет</label>
+        <select class="inp" id="f-fac">
+          <option>IT</option>
+          <option>Економіка</option>
+          <option>Право</option>
+          <option>Медицина</option>
+          <option>Інженерія</option>
+          <option>Педагогіка</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn btn-primary" onclick="addStudent()">+ Додати</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="inp" id="q-name" placeholder="Фільтр за ім'ям..." oninput="renderList()">
+    </div>
+    <select class="inp" id="q-fac" onchange="renderList()" style="width:150px">
+      <option value="">Всі факультети</option>
+      <option>IT</option><option>Економіка</option><option>Право</option>
+      <option>Медицина</option><option>Інженерія</option><option>Педагогіка</option>
+    </select>
+    <input class="inp" id="q-min-grade" type="number" placeholder="Мін. бал" min="0" max="100" oninput="renderList()" style="width:110px">
+    <input class="inp" id="q-max-age" type="number" placeholder="Макс. вік" min="16" max="35" oninput="renderList()" style="width:110px">
+    <select class="inp" id="q-sort" onchange="renderList()" style="width:150px">
+      <option value="id-asc">За ID ↑</option>
+      <option value="name-asc">Ім'я A→Я</option>
+      <option value="name-desc">Ім'я Я→А</option>
+      <option value="age-asc">Вік ↑</option>
+      <option value="age-desc">Вік ↓</option>
+      <option value="grade-desc">Бал ↓</option>
+      <option value="grade-asc">Бал ↑</option>
+    </select>
+    <button class="btn btn-ghost" onclick="clearFilters()">✕</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Ім'я</th>
+          <th>Вік</th>
+          <th>Бал</th>
+          <th>Факультет</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div style="margin-top:10px;font-size:12px;color:var(--muted);font-family:var(--mono);" id="list-count"></div>
+</div>
+
+<!-- STATS -->
+<div class="panel" id="panel-stats">
+  <div class="stats-grid" id="stats-grid"></div>
+  <div id="best-wrap"></div>
+  <div class="fac-section" id="fac-section"></div>
+</div>
+
+<!-- SEARCH -->
+<div class="panel" id="panel-search">
+  <div class="form-card">
+    <div class="form-title">Пошук студента за ім'ям</div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="search-wrap" style="flex:1">
+        <span class="search-icon">🔍</span>
+        <input class="inp" id="s-query" placeholder="Введіть ім'я або частину імені..." oninput="doSearch()">
+      </div>
+      <button class="btn btn-ghost" onclick="document.getElementById('s-query').value='';doSearch()">✕</button>
+    </div>
+  </div>
+  <div id="search-results"></div>
+</div>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// ДАНІ
+// ============================================================
+const FAC = ['IT','Економіка','Право','Медицина','Інженерія','Педагогіка'];
+const SAMPLE_NAMES = [
+  'Іван Петренко','Марія Коваль','Олег Бондаренко','Анна Шевченко',
+  'Дмитро Лисенко','Катерина Мороз','Андрій Ткач','Юлія Гриценко',
+  'Роман Савченко','Оксана Клименко','Павло Яценко','Тетяна Кравченко'
+];
+
+let students = [];
+let nextId = 1;
+
+// Генерація тестових даних
+(function seed() {
+  SAMPLE_NAMES.forEach(name => {
+    students.push({
+      id: nextId++,
+      name,
+      age: 18 + Math.floor(Math.random() * 8),
+      grade: Math.round((55 + Math.random() * 45) * 10) / 10,
+      faculty: FAC[Math.floor(Math.random() * FAC.length)]
+    });
+  });
+})();
+
+// ============================================================
+// ВАЛІДАЦІЯ
+// ============================================================
+function validate() {
+  let ok = true;
+  const name = document.getElementById('f-name').value.trim();
+  const age = document.getElementById('f-age').value;
+  const grade = document.getElementById('f-grade').value;
+
+  // reset
+  ['name','age','grade'].forEach(f => {
+    document.getElementById('f-' + f).classList.remove('err');
+    document.getElementById('e-' + f).textContent = '';
+  });
+
+  if (!name || name.length < 2) {
+    document.getElementById('f-name').classList.add('err');
+    document.getElementById('e-name').textContent = 'Мін. 2 символи';
+    ok = false;
+  }
+  if (!age || +age < 16 || +age > 35) {
+    document.getElementById('f-age').classList.add('err');
+    document.getElementById('e-age').textContent = 'Від 16 до 35';
+    ok = false;
+  }
+  if (grade === '' || +grade < 0 || +grade > 100) {
+    document.getElementById('f-grade').classList.add('err');
+    document.getElementById('e-grade').textContent = 'Від 0 до 100';
+    ok = false;
+  }
+  return ok;
+}
+
+function addStudent() {
+  if (!validate()) return;
+  const s = {
+    id: nextId++,
+    name: document.getElementById('f-name').value.trim(),
+    age: +document.getElementById('f-age').value,
+    grade: +parseFloat(document.getElementById('f-grade').value).toFixed(1),
+    faculty: document.getElementById('f-fac').value
+  };
+  students.push(s);
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-age').value = '';
+  document.getElementById('f-grade').value = '';
+  toast('✅ Студента додано', 'ok');
+  renderAll();
+}
+
+function deleteStudent(id) {
+  students = students.filter(s => s.id !== id);
+  toast('🗑 Видалено', 'ok');
+  renderAll();
+}
+
+// ============================================================
+// ФІЛЬТРАЦІЯ + СОРТУВАННЯ (filter/sort/reduce)
+// ============================================================
+function getFiltered() {
+  const qName = document.getElementById('q-name').value.trim().toLowerCase();
+  const qFac  = document.getElementById('q-fac').value;
+  const qMin  = parseFloat(document.getElementById('q-min-grade').value);
+  const qAge  = parseInt(document.getElementById('q-max-age').value);
+  const sort  = document.getElementById('q-sort').value;
+
+  // filter()
+  let list = students.filter(s => {
+    if (qName && !s.name.toLowerCase().includes(qName)) return false;
+    if (qFac  && s.faculty !== qFac) return false;
+    if (!isNaN(qMin) && s.grade < qMin) return false;
+    if (!isNaN(qAge) && s.age > qAge) return false;
+    return true;
+  });
+
+  // sort()
+  const [field, dir] = sort.split('-');
+  list.sort((a, b) => {
+    let va = a[field], vb = b[field];
+    if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+    if (va < vb) return dir === 'asc' ? -1 : 1;
+    if (va > vb) return dir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  return list;
+}
+
+function clearFilters() {
+  ['q-name','q-fac','q-min-grade','q-max-age'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('q-sort').value = 'id-asc';
+  renderList();
+}
+
+// ============================================================
+// РЕНДЕР ТАБЛИЦІ
+// ============================================================
+function gradeBadge(g) {
+  if (g >= 90) return `<span class="grade-badge g-a">${g}</span>`;
+  if (g >= 75) return `<span class="grade-badge g-b">${g}</span>`;
+  if (g >= 60) return `<span class="grade-badge g-c">${g}</span>`;
+  return `<span class="grade-badge g-d">${g}</span>`;
+}
+
+function renderList() {
+  const list = getFiltered();
+  const tbody = document.getElementById('tbody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Студентів не знайдено</td></tr>';
+  } else {
+    tbody.innerHTML = list.map(s => `
+      <tr>
+        <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${String(s.id).padStart(3,'0')}</td>
+        <td style="font-weight:500">${s.name}</td>
+        <td style="font-family:var(--mono)">${s.age}</td>
+        <td>${gradeBadge(s.grade)}</td>
+        <td><span class="fac-tag">${s.faculty}</span></td>
+        <td><button class="btn btn-danger" onclick="deleteStudent(${s.id})">Видалити</button></td>
+      </tr>
+    `).join('');
+  }
+  document.getElementById('list-count').textContent =
+    `Показано: ${list.length} з ${students.length} студентів`;
+  updateHeader();
+}
+
+// ============================================================
+// СТАТИСТИКА (reduce/find)
+// ============================================================
+function renderStats() {
+  if (!students.length) {
+    document.getElementById('stats-grid').innerHTML = '<p class="empty">Немає даних</p>';
+    document.getElementById('best-wrap').innerHTML = '';
+    document.getElementById('fac-section').innerHTML = '';
+    return;
+  }
+
+  const total = students.length;
+
+  // reduce() — середній бал
+  const avgGrade = (students.reduce((sum, s) => sum + s.grade, 0) / total).toFixed(1);
+  const avgAge   = (students.reduce((sum, s) => sum + s.age, 0)   / total).toFixed(1);
+
+  // find() — найкращий студент
+  const best = students.reduce((b, s) => s.grade > b.grade ? s : b, students[0]);
+
+  // Розподіл за факультетами (reduce)
+  const facMap = students.reduce((acc, s) => {
+    acc[s.faculty] = acc[s.faculty] || { count: 0, total: 0 };
+    acc[s.faculty].count++;
+    acc[s.faculty].total += s.grade;
+    return acc;
+  }, {});
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="scard"><div class="scard-val">${total}</div><div class="scard-lbl">Всього студентів</div></div>
+    <div class="scard"><div class="scard-val">${avgGrade}</div><div class="scard-lbl">Середній бал</div></div>
+    <div class="scard"><div class="scard-val">${avgAge}</div><div class="scard-lbl">Середній вік</div></div>
+    <div class="scard"><div class="scard-val">${Object.keys(facMap).length}</div><div class="scard-lbl">Факультетів</div></div>
+    <div class="scard"><div class="scard-val">${students.filter(s=>s.grade>=90).length}</div><div class="scard-lbl">Відмінників (≥90)</div></div>
+    <div class="scard"><div class="scard-val">${students.filter(s=>s.grade<60).length}</div><div class="scard-lbl">Незадовільно (&lt;60)</div></div>
+  `;
+
+  document.getElementById('best-wrap').innerHTML = `
+    <div class="best-card" style="margin-bottom:20px">
+      <div class="best-icon">🏆</div>
+      <div>
+        <div class="best-name">${best.name}</div>
+        <div class="best-meta">${best.faculty} · ${best.age} років · ID ${String(best.id).padStart(3,'0')}</div>
+      </div>
+      <div class="best-grade">${best.grade}</div>
+    </div>
+  `;
+
+  const maxCount = Math.max(...Object.values(facMap).map(f => f.count));
+  document.getElementById('fac-section').innerHTML = `
+    <div class="sec-title">Розподіл за факультетами</div>
+    ${Object.entries(facMap).sort((a,b)=>b[1].count-a[1].count).map(([fac, data]) => `
+      <div class="fac-row">
+        <div class="fac-label">${fac}</div>
+        <div class="fac-bar-bg">
+          <div class="fac-bar" style="width:${(data.count/maxCount*100).toFixed(0)}%"></div>
+        </div>
+        <div class="fac-num">${data.count}</div>
+        <div class="fac-avg">∅ ${(data.total/data.count).toFixed(1)}</div>
+      </div>
+    `).join('')}
+  `;
+}
+
+// ============================================================
+// ПОШУК (find/filter)
+// ============================================================
+function doSearch() {
+  const q = document.getElementById('s-query').value.trim().toLowerCase();
+  const wrap = document.getElementById('search-results');
+  if (!q) { wrap.innerHTML = ''; return; }
+
+  // filter() — часткове співпадіння
+  const found = students.filter(s => s.name.toLowerCase().includes(q));
+
+  if (!found.length) {
+    wrap.innerHTML = `<div class="search-result"><div class="empty">Нічого не знайдено за запитом «${q}»</div></div>`;
+    return;
+  }
+
+  wrap.innerHTML = found.map(s => `
+    <div class="search-result">
+      <div class="sr-name">${highlight(s.name, q)} ${gradeBadge(s.grade)}</div>
+      <div class="sr-row">
+        <div class="sr-item">ID: <span>${String(s.id).padStart(3,'0')}</span></div>
+        <div class="sr-item">Вік: <span>${s.age}</span></div>
+        <div class="sr-item">Факультет: <span>${s.faculty}</span></div>
+        <div class="sr-item">Бал: <span>${s.grade}</span></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function highlight(text, q) {
+  const re = new RegExp(`(${q})`, 'gi');
+  return text.replace(re, '<mark style="background:#fef08a;border-radius:2px">$1</mark>');
+}
+
+// ============================================================
+// HEADER
+// ============================================================
+function updateHeader() {
+  document.getElementById('h-total').textContent = `${students.length} студентів`;
+  if (!students.length) {
+    document.getElementById('h-avg').textContent = 'Сер: —';
+    document.getElementById('h-best').textContent = 'Топ: —';
+    return;
+  }
+  const avg = (students.reduce((s,x)=>s+x.grade,0)/students.length).toFixed(1);
+  const best = students.reduce((b,s)=>s.grade>b.grade?s:b, students[0]);
+  document.getElementById('h-avg').textContent = `Сер: ${avg}`;
+  document.getElementById('h-best').textContent = `Топ: ${best.name.split(' ')[0]}`;
+}
+
+// ============================================================
+// TABS & UTILS
+// ============================================================
+function tab(name) {
+  document.querySelectorAll('.tab').forEach((t,i)=>
+    t.classList.toggle('active', ['list','stats','search'][i]===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if (name==='stats') renderStats();
+}
+
+function renderAll() { renderList(); renderStats(); doSearch(); }
+
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show ' + type;
+  setTimeout(()=>t.className='', 2400);
+}
+
+// INIT
+renderAll();
+</script>
+</body>
+</html>
